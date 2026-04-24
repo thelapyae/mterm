@@ -10,4 +10,4 @@
 ---
 
 ### Download
-Go to the **[Releases](../../releases)** page to download the latest `.dmg` installer for macOS.
+Go to the **[Releases](../../releases)** page to download the latest `.dmg` installer for macOS. (Version 1.0.1)
