@@ -74,8 +74,8 @@ term.onRender(() => {
     scheduleRender();
 });
 
-// We also refresh on a timer for safety/initial load
-setInterval(scheduleRender, 500);
+// Rely on onRender for performance, use a slower fallback for edge cases
+setInterval(scheduleRender, 2000);
 
 // Composition state (used by renderLine for the Myanmar preview underline)
 let isComposing = false;
@@ -125,6 +125,11 @@ function renderLine(line, cursorX) {
             html += wrapWithStyle(currentContent, lastFg, lastFgMode, lastBg, lastBgMode, lastBold, lastItalic, lastUnderline);
             currentContent = '';
             
+            // Draw composition if active
+            if (isComposing && compositionText) {
+                html += `<span class="composition">${escapeHtml(compositionText)}</span>`;
+            }
+
             // Draw cursor cell
             const c = line.getCell(x, cell);
             let char = ' ';
@@ -132,7 +137,6 @@ function renderLine(line, cursorX) {
             if (c && c.getWidth() !== 0) {
                 char = c.getChars() || ' ';
                 // Check for the "prerender" blue underline
-                // In xterm.js, underline is c.isUnderline()
                 if (c.isUnderline()) {
                     cursorStyle = 'text-decoration: underline; text-decoration-color: #89b4fa;';
                 }
@@ -178,6 +182,9 @@ function renderLine(line, cursorX) {
     
     // If cursor is beyond the last cell (waiting at the end)
     if (cursorX === term.cols) {
+        if (isComposing && compositionText) {
+            html += `<span class="composition">${escapeHtml(compositionText)}</span>`;
+        }
         html += `<span class="cursor"> </span>`;
     }
     
@@ -222,8 +229,63 @@ let settings = {
     theme: 'mocha',
     opacity: 0.7,
     fontSize: 19,
-    fontFamily: 'Bundled MesloLGS NF'
+    fontFamily: 'Bundled MesloLGS NF',
+    burglishEnabled: false
 };
+
+// Burglish State
+let burglishInput;
+let burglishSuggest;
+
+function initBurglish() {
+    burglishInput = document.getElementById('sourceText');
+    burglishSuggest = document.getElementById('sourceTextsuggest');
+    
+    // Initialize the engine
+    if (typeof Burglish !== 'undefined') {
+        try {
+            // Initialize Burglish app (sets up global fonts and state)
+            Burglish().load();
+            
+            // Set fonts for our hidden inputs
+            if (window.gM) {
+                window.gM["source"] = { name: "Burglish" };
+                window.gM["target"] = { name: "UniBurma" };
+            }
+
+            // Ensure suggestions and typewriter mode are configured
+            if (window.gZ && window.sourceText) {
+                // Manually re-init to be sure
+                window.gZ({
+                    id: 'sourceText',
+                    K6: true, // Suggestions ON
+                    Qo: true, // Typewriter mode (CONVERT AS WE TYPE)
+                    KY: false // No caps
+                });
+            }
+            
+            if (window.OD && window.OD['sourceText']) {
+                window.OD['sourceText'].K6 = true; 
+                window.OD['sourceText'].Qo = true; // IMPORTANT
+            }
+
+            // Sync suggestion menu visibility and content
+            setInterval(() => {
+                if (settings.burglishEnabled && burglishInput.value) {
+                    const hasContent = burglishSuggest.innerHTML.trim().length > 0;
+                    if (hasContent && burglishSuggest.style.display === 'none') {
+                        burglishSuggest.style.setProperty('display', 'block', 'important');
+                        updateBurglishPreview();
+                    }
+                }
+            }, 150); // Less frequent sync to save CPU
+            
+            console.log('Burglish engine initialized');
+        } catch (e) {
+            console.error('Burglish init failed', e);
+        }
+    }
+}
 
 function loadSettings() {
     const saved = localStorage.getItem('mterm-settings');
@@ -247,6 +309,7 @@ function applySettings() {
     if (themeNameEl) themeNameEl.innerText = theme.name;
     
     // Apply to Body (Background & Base Font)
+    document.documentElement.style.backgroundColor = 'transparent';
     document.body.style.backgroundColor = `rgba(${theme.bg.join(',')}, ${settings.opacity})`;
     document.body.style.fontFamily = `'${settings.fontFamily}', 'Menlo', 'Monaco', 'Myanmar Sangam MN', 'Padauk', 'Noto Sans Myanmar', monospace`;
     document.body.style.fontSize = `${settings.fontSize}px`;
@@ -342,14 +405,142 @@ window.termAPI.onOutput(data => {
 
 // Handle input
 term.onData(data => {
+    if (settings.burglishEnabled) {
+        // Printable ASCII (A-Z, a-z, etc)
+        if (data.length === 1 && data.charCodeAt(0) >= 32 && data.charCodeAt(0) <= 126) {
+            // Forward all keys to Burglish
+            dispatchKeyToBurglish(data);
+            return;
+        } else if (data === '\r' || data === ' ') { // Enter or Space
+            if (burglishInput.value) {
+                // Manually convert the final phonetic buffer to Burmese
+                let text = burglishInput.value;
+                if (typeof text.Ng === 'function') {
+                    text = text.Ng('Burglish', 'UniBurma');
+                }
+                window.termAPI.sendInput(text + (data === ' ' ? ' ' : ''));
+                clearBurglish();
+                return;
+            }
+        } else if (data === '\x1b[A') { // Arrow Up
+            if (burglishInput.value) {
+                dispatchKeyToBurglish('ArrowUp', 38);
+                return;
+            }
+        } else if (data === '\x1b[B') { // Arrow Down
+            if (burglishInput.value) {
+                dispatchKeyToBurglish('ArrowDown', 40);
+                return;
+            }
+        } else if (data === '\x7f') { // Backspace
+            if (burglishInput.value) {
+                dispatchKeyToBurglish('Backspace', 8);
+                return;
+            }
+        }
+    }
+    
+    // Default: Send directly to PTY
     window.termAPI.sendInput(data);
 });
+
+function dispatchKeyToBurglish(key, keyCode) {
+    // Only focus if not focused to avoid flickering/delays
+    if (document.activeElement !== burglishInput) {
+        burglishInput.focus();
+    }
+    
+    const prevValue = burglishInput.value;
+    
+    // KeyDown
+    const down = new KeyboardEvent('keydown', { key: key, keyCode: keyCode || key.charCodeAt(0), bubbles: true, cancelable: true });
+    burglishInput.dispatchEvent(down);
+    
+    // KeyPress
+    if (key.length === 1 && !keyCode) {
+        const press = new KeyboardEvent('keypress', { key: key, charCode: key.charCodeAt(0), bubbles: true, cancelable: true });
+        burglishInput.dispatchEvent(press);
+        
+        // Manual update to keep the phonetic buffer in sync
+        burglishInput.value += key;
+    } else if (key === 'Backspace') {
+        if (burglishInput.value.length > 0) {
+            burglishInput.value = burglishInput.value.slice(0, -1);
+        }
+    }
+    
+    // KeyUp
+    const up = new KeyboardEvent('keyup', { key: key, keyCode: keyCode || key.charCodeAt(0), bubbles: true, cancelable: true });
+    burglishInput.dispatchEvent(up);
+    
+    // Trigger engine processing
+    burglishInput.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    // Instant UI update
+    updateBurglishPreview();
+}
+
+function clearBurglish() {
+    burglishInput.value = '';
+    // Reset engine state
+    if (window.OD && window.OD['sourceText']) {
+        window.OD['sourceText'].list = [];
+    }
+    burglishSuggest.innerHTML = '';
+    burglishInput.dispatchEvent(new Event('input', { bubbles: true }));
+    updateBurglishPreview();
+}
+
+function updateBurglishPreview() {
+    if (!settings.burglishEnabled) {
+        isComposing = false;
+        compositionText = '';
+        burglishSuggest.style.display = 'none';
+        renderBuffer();
+        return;
+    }
+
+    if (burglishInput.value) {
+        isComposing = true;
+        
+        // Show converted Burmese in the terminal preview
+        if (typeof burglishInput.value.Ng === 'function') {
+            compositionText = burglishInput.value.Ng('Burglish', 'UniBurma');
+        } else {
+            compositionText = burglishInput.value;
+        }
+        
+        // Show the suggestion menu only if it has content
+        const suggestions = burglishSuggest.querySelectorAll('li');
+        if (suggestions.length > 0) {
+            burglishSuggest.style.setProperty('display', 'block', 'important');
+            
+            // Position near cursor
+            const cursor = document.querySelector('.cursor');
+            if (cursor) {
+                const rect = cursor.getBoundingClientRect();
+                burglishSuggest.style.left = `${rect.left}px`;
+                burglishSuggest.style.top = `${rect.bottom + 8}px`;
+            }
+        } else {
+            burglishSuggest.style.setProperty('display', 'none', 'important');
+        }
+    } else {
+        isComposing = false;
+        compositionText = '';
+        burglishSuggest.style.display = 'none';
+    }
+    renderBuffer();
+}
 
 // Keyboard focus management
 window.addEventListener('load', async () => {
     await document.fonts.ready;
     loadSettings(); // Initialize settings
-    window.termAPI.spawnPTY();
+    
+    // Fit first to get initial dimensions
+    fitAddon.fit();
+    window.termAPI.spawnPTY({ cols: term.cols, rows: term.rows });
     
     // UI Event Listeners
     const overlay = document.getElementById('settings-overlay');
@@ -362,6 +553,16 @@ window.addEventListener('load', async () => {
 
     const closeSettings = () => { overlay.style.display = 'none'; term.focus(); };
     document.getElementById('close-settings').onclick = closeSettings;
+
+    const burglishToggle = document.getElementById('burglish-toggle');
+    burglishToggle.onchange = (e) => {
+        settings.burglishEnabled = e.target.checked;
+        saveSettings();
+        if (!settings.burglishEnabled) {
+            burglishInput.value = '';
+            updateBurglishPreview();
+        }
+    };
 
     opacitySlider.oninput = (e) => {
         settings.opacity = parseFloat(e.target.value);
@@ -395,7 +596,10 @@ window.addEventListener('load', async () => {
     fontSizeSlider.value = settings.fontSize;
     fontSizeVal.innerText = settings.fontSize;
     fontSelect.value = settings.fontFamily;
+    burglishToggle.checked = settings.burglishEnabled;
     document.querySelector(`.theme-btn[data-theme="${settings.theme}"]`)?.classList.add('active');
+
+    initBurglish();
 
     // Global Shortcut Listener (Cmd + ,)
     window.addEventListener('keydown', (e) => {
@@ -406,23 +610,35 @@ window.addEventListener('load', async () => {
         if (e.key === 'Escape' && overlay.style.display === 'flex') {
             closeSettings();
         }
+        if (e.key === 'F2') {
+            settings.burglishEnabled = !settings.burglishEnabled;
+            saveSettings();
+            const burglishToggle = document.getElementById('burglish-toggle');
+            if (burglishToggle) burglishToggle.checked = settings.burglishEnabled;
+            if (!settings.burglishEnabled) {
+                burglishInput.value = '';
+                updateBurglishPreview();
+            }
+        }
     });
 
     // Ensure PTY knows the exact size after fonts loaded and layout settled
     setTimeout(() => {
         fitAddon.fit();
         window.termAPI.sendResize(term.cols, term.rows);
-    }, 100);
+        term.focus(); // AUTO-FOCUS ON START
+    }, 200);
     
-    // Focus the hidden terminal's textarea so it can capture input
+    // Focus management
     const focusTerminal = () => {
-        if (overlay.style.display === 'none') {
+        if (overlay.style.display === 'none' && document.activeElement !== burglishInput) {
             term.focus();
         }
     };
     
     document.addEventListener('click', focusTerminal);
     document.addEventListener('keydown', focusTerminal);
+    window.addEventListener('focus', focusTerminal);
     focusTerminal();
 });
 

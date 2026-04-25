@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>mterm</title>
   <link rel="stylesheet" href="../node_modules/@xterm/xterm/css/xterm.css" />
+  <script src="../burglish_engine/js/burglish.js" charset="utf-8"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     @font-face {
@@ -13,7 +14,7 @@
       font-style: normal;
     }
     body {
-      background: rgba(30, 30, 46, 0.7); /* 0.7 opacity base color */
+      background: transparent;
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -84,7 +85,7 @@
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(10px);
-      z-index: 200;
+      z-index: 1000;
       display: none; /* Hidden by default */
       align-items: center;
       justify-content: center;
@@ -93,13 +94,14 @@
       background: #1e1e2e;
       border: 1px solid #45475a;
       border-radius: 12px;
-      padding: 24px;
+      padding: 30px;
       width: 400px;
       color: #cdd6f4;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .settings-modal h2 {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      text-align: center;
       font-size: 1.2rem;
       color: #89b4fa;
     }
@@ -149,17 +151,16 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      background: #1e1e2e;
+      background: transparent;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
     }
-    #terminal-container {
+    #terminal-wrapper {
       width: 100vw;
       height: 100vh;
       padding: 10px;
       box-sizing: border-box;
-      background: #1e1e2e;
-      box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+      background: transparent;
     }
     .xterm-viewport::-webkit-scrollbar {
       width: 8px;
@@ -179,6 +180,77 @@
         text-decoration-color: #89b4fa !important;
         text-underline-offset: 2px;
     }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #313244; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: #cdd6f4; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #89b4fa; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .composition {
+        color: #89b4fa !important;
+        background: rgba(137, 180, 250, 0.15);
+        border-bottom: 2px solid #89b4fa;
+        padding: 0 1px;
+        border-radius: 2px;
+    }
+
+    /* Burglish Suggestion Style */
+    .g7 {
+        position: fixed !important;
+        left: -9999px;
+        top: -9999px;
+        background: #ffffff !important;
+        border: 1px solid #ccc !important;
+        border-radius: 6px !important;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3) !important;
+        color: #111 !important;
+        padding: 6px !important;
+        z-index: 9999 !important;
+        font-family: "Padauk", "Noto Sans Myanmar", sans-serif;
+        font-size: 15px;
+        min-width: 150px;
+        display: none !important;
+    }
+    .g7 ol {
+        display: flex;
+        flex-direction: column;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .g7 li {
+        padding: 8px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        border-radius: 4px;
+        margin-bottom: 2px;
+    }
+    .g7 li:last-child { margin-bottom: 0; }
+    .g7 li span.num {
+        background: #89b4fa;
+        color: white;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-right: 12px;
+        font-size: 11px;
+        font-weight: 800;
+        min-width: 20px;
+        text-align: center;
+    }
+    .g7 li.on {
+        background: #89b4fa !important;
+        color: white !important;
+    }
+    .g7 li.on span.num {
+        background: white;
+        color: #89b4fa;
+    }
+    .g7 li:hover:not(.on) {
+        background: #f0f0f0;
+    }
   </style>
 </head>
 <body>
@@ -186,6 +258,14 @@
     <div class="settings-modal">
       <h2>Settings</h2>
       
+      <div class="setting-item">
+        <span>Burglish Phonetic Input</span>
+        <label class="switch">
+          <input type="checkbox" id="burglish-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <div class="setting-group">
         <label>Theme: <span id="theme-name" style="color: #89b4fa; font-weight: bold;">Mocha</span></label>
         <div class="theme-grid">
@@ -219,8 +299,7 @@
 
       <button class="close-btn" id="close-settings">Done</button>
       <p style="font-size: 10px; color: #6c7086; margin-top: 15px; text-align: center;">
-        Credit to <a href="https://github.com/saturngod/myanso" style="color: #89b4fa; text-decoration: none;">saturngod/myanso</a><br>
-        Version 1.0.2 | Press Cmd + , for settings
+        Version 1.0.3 | Press Cmd + , for settings
       </p>
     </div>
   </div>
@@ -235,6 +314,17 @@
   <script src="../node_modules/@xterm/addon-web-links/lib/addon-web-links.js"></script>
   <script src="../node_modules/@xterm/addon-unicode11/lib/addon-unicode11.js"></script>
   <script src="../node_modules/@xterm/addon-canvas/lib/addon-canvas.js"></script>
+
+  <!-- Burglish Engine Components -->
+  <textarea id="sourceText" style="position: absolute; left: -9999px;"></textarea>
+  <div id="sourceTextsuggest" class="g7"></div>
+  <div id="sourceTextSpan" style="display: none;"></div>
+  
+  <div style="display: none;">
+    <ol id="sourceOption"></ol>
+    <ol id="targetOption"></ol>
+  </div>
+
   <script src="terminal.js"></script>
 </body>
 </html>

@@ -13,7 +13,6 @@ A modern terminal emulator with proper Burmese script support, built with Electr
 
 ## Credits
 - Built with [xterm.js](https://xtermjs.org/) and [node-pty](https://github.com/microsoft/node-pty).
-- Inspired by and credit to [saturngod/myanso](https://github.com/saturngod/myanso) for Myanmar language support insights.
 
 ## License
 MIT

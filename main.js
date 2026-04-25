@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const pty = require('node-pty');
 const path = require('path');
 const os = require('os');
@@ -20,6 +21,7 @@ function createWindow() {
         transparent: true,
         vibrancy: 'fullscreen-ui', // macOS blur effect
         titleBarStyle: 'hidden', // "Buttonless" feel (traffic lights only)
+        show: false, // Start hidden to avoid flicker
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -29,28 +31,30 @@ function createWindow() {
 
     mainWindow.loadFile('renderer/index.html');
 
-    mainWindow.webContents.on('did-finish-load', () => {
-        // Ready
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show();
+        mainWindow.focus();
     });
 
-    ipcMain.on('spawn-pty', (event) => {
+    ipcMain.on('spawn-pty', (event, size) => {
         if (ptyProcess) return; // Already spawned
+        
+        const cols = (size && size.cols) || 120;
+        const rows = (size && size.rows) || 40;
+        console.log(`Spawning PTY with size: ${cols}x${rows}`);
 
         const shell = os.platform() === 'win32' 
             ? 'powershell.exe' 
             : (process.env.SHELL || (os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash'));
 
         const args = shell.includes('powershell') ? [] : ['-i'];
-
-        // The shell needs a real folder to start in. In a packaged app, __dirname is an .asar archive
-        // which the shell cannot read, causing it to instantly crash.
         const cwd = os.homedir();
 
         try {
             ptyProcess = pty.spawn(shell, args, {
                 name: 'xterm-256color',
-                cols: 120,
-                rows: 40,
+                cols: cols,
+                rows: rows,
                 cwd: cwd,
                 env: {
                     ...process.env,
@@ -101,7 +105,39 @@ function createWindow() {
     });
 }
 
-app.whenReady().then(createWindow);
+function checkUpdates() {
+    // Basic config
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on('update-available', (info) => {
+        console.log('Update available:', info.version);
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+        dialog.showMessageBox({
+            type: 'info',
+            title: 'Update Ready',
+            message: `Version ${info.version} has been downloaded and is ready to install.`,
+            buttons: ['Restart now', 'Later']
+        }).then((result) => {
+            if (result.response === 0) {
+                autoUpdater.quitAndInstall();
+            }
+        });
+    });
+
+    autoUpdater.on('error', (err) => {
+        console.error('Updater error:', err);
+    });
+
+    autoUpdater.checkForUpdatesAndNotify();
+}
+
+app.whenReady().then(() => {
+    createWindow();
+    checkUpdates();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
