@@ -1,8 +1,8 @@
 version: 1.0.4
 files:
   - url: mterm-Setup-1.0.4.exe
-    sha512: 9bNJkCYdfw7U7ZP36fqMeNu+6IlyLOQ/jjnbleNw0GsmkglZjhu5lXy6YaeqhoiKxdEyCGibIL3UfaJevZA8Xw==
-    size: 93607756
+    sha512: ZOIUpoKGVUF5Sot9jY/AptLada1KgPnYOPEp3PmwlOBuozU9H4S0Aco2I0YS83oS1Bfm/MUU/5ZZR3XmBSq3wQ==
+    size: 93607782
 path: mterm-Setup-1.0.4.exe
-sha512: 9bNJkCYdfw7U7ZP36fqMeNu+6IlyLOQ/jjnbleNw0GsmkglZjhu5lXy6YaeqhoiKxdEyCGibIL3UfaJevZA8Xw==
-releaseDate: '2026-04-25T10:28:14.596Z'
+sha512: ZOIUpoKGVUF5Sot9jY/AptLada1KgPnYOPEp3PmwlOBuozU9H4S0Aco2I0YS83oS1Bfm/MUU/5ZZR3XmBSq3wQ==
+releaseDate: '2026-04-25T10:37:41.274Z'
