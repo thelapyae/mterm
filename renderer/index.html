@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>mterm</title>
+  <link rel="stylesheet" href="../node_modules/@xterm/xterm/css/xterm.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @font-face {
+      font-family: 'Bundled MesloLGS NF';
+      src: url('../assets/fonts/MesloLGS_NF_Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      background: rgba(30, 30, 46, 0.7); /* 0.7 opacity base color */
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      color: #cdd6f4;
+      font-family: 'Bundled MesloLGS NF', 'MesloLGS Nerd Font Mono', 'MesloLGS NF', 'MesloLGS Nerd Font', 'Menlo', 'Monaco', 'Myanmar Sangam MN', 'Padauk', 'Noto Sans Myanmar', monospace;
+      font-size: 19px;
+      line-height: 1.2;
+    }
+    .titlebar {
+      height: 28px;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      -webkit-app-region: drag;
+      z-index: 100;
+    }
+    
+    #terminal-wrapper {
+      position: absolute;
+      top: 28px; bottom: 0; left: 0; right: 0; /* Below titlebar */
+      padding: 10px; /* padding.x = 10, padding.y = 10 */
+      background: transparent;
+      overflow: hidden;
+    }
+
+    /* THE TRICK: A hidden xterm to handle the "Brain" work */
+    #hidden-terminal {
+      position: absolute;
+      opacity: 0;
+      top: 10px; left: 10px; right: 10px; bottom: 10px;
+      z-index: 10;
+    }
+
+    /* THE FACE: A custom div that renders the "Brain's" state with perfect shaping */
+    #output {
+      position: absolute;
+      top: 10px; left: 10px; right: 10px; bottom: 10px;
+      overflow: hidden; /* NO NATIVE SCROLLBAR! Brain handles it */
+      white-space: pre;
+      background: transparent;
+      outline: none;
+      z-index: 1;
+    }
+    .cursor {
+      background: #cdd6f4;
+      color: #1e1e2e;
+      display: inline-block;
+      min-width: 1ch;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .line {
+      min-height: 1.2em;
+      display: block;
+    }
+    .composition {
+      text-decoration: underline;
+      text-decoration-color: #89b4fa;
+      text-decoration-thickness: 2px;
+    }
+
+    /* SETTINGS OVERLAY */
+    #settings-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      display: none; /* Hidden by default */
+      align-items: center;
+      justify-content: center;
+    }
+    .settings-modal {
+      background: #1e1e2e;
+      border: 1px solid #45475a;
+      border-radius: 12px;
+      padding: 24px;
+      width: 400px;
+      color: #cdd6f4;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .settings-modal h2 {
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      color: #89b4fa;
+    }
+    .setting-group {
+      margin-bottom: 20px;
+    }
+    .setting-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #a6adc8;
+    }
+    .setting-group select, .setting-group input {
+      width: 100%;
+      background: #313244;
+      border: 1px solid #45475a;
+      border-radius: 6px;
+      padding: 8px;
+      color: #cdd6f4;
+      outline: none;
+    }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .theme-btn {
+      height: 30px;
+      border-radius: 4px;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .theme-btn.active { border-color: #89b4fa; }
+    
+    .close-btn {
+      margin-top: 10px;
+      width: 100%;
+      background: #89b4fa;
+      color: #1e1e2e;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #1e1e2e;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+    }
+    #terminal-container {
+      width: 100vw;
+      height: 100vh;
+      padding: 10px;
+      box-sizing: border-box;
+      background: #1e1e2e;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+    }
+    .xterm-viewport::-webkit-scrollbar {
+      width: 8px;
+    }
+    .xterm-viewport::-webkit-scrollbar-track {
+      background: #1e1e2e;
+    }
+    .xterm-viewport::-webkit-scrollbar-thumb {
+      background: #45475a;
+      border-radius: 4px;
+    }
+    .xterm-viewport::-webkit-scrollbar-thumb:hover {
+      background: #585b70;
+    }
+    /* Enhance the blue underline styling if possible */
+    .xterm-rows span[style*="text-decoration: underline"] {
+        text-decoration-color: #89b4fa !important;
+        text-underline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div id="settings-overlay">
+    <div class="settings-modal">
+      <h2>Settings</h2>
+      
+      <div class="setting-group">
+        <label>Theme: <span id="theme-name" style="color: #89b4fa; font-weight: bold;">Mocha</span></label>
+        <div class="theme-grid">
+          <div class="theme-btn active" data-theme="mocha" style="background: #1e1e2e;" title="Mocha"></div>
+          <div class="theme-btn" data-theme="onedark" style="background: #282c34;" title="One Dark"></div>
+          <div class="theme-btn" data-theme="nord" style="background: #2e3440;" title="Nord"></div>
+          <div class="theme-btn" data-theme="dracula" style="background: #282a36;" title="Dracula"></div>
+          <div class="theme-btn" data-theme="solarized" style="background: #002b36;" title="Solarized"></div>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label>Opacity: <span id="opacity-val">0.7</span></label>
+        <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.05" value="0.7">
+      </div>
+
+      <div class="setting-group">
+        <label>Font Size: <span id="font-size-val">19</span>px</label>
+        <input type="range" id="font-size-slider" min="12" max="32" step="1" value="19">
+      </div>
+
+      <div class="setting-group">
+        <label>Font Family</label>
+        <select id="font-select">
+          <option value="Bundled MesloLGS NF">MesloLGS NF (Bundled)</option>
+          <option value="Menlo">Menlo</option>
+          <option value="Monaco">Monaco</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+      </div>
+
+      <button class="close-btn" id="close-settings">Done</button>
+      <p style="font-size: 10px; color: #6c7086; margin-top: 15px; text-align: center;">
+        Credit to <a href="https://github.com/saturngod/myanso" style="color: #89b4fa; text-decoration: none;">saturngod/myanso</a><br>
+        Version 1.0.2 | Press Cmd + , for settings
+      </p>
+    </div>
+  </div>
+  <div class="titlebar"></div>
+  <div id="terminal-wrapper">
+    <div id="hidden-terminal"></div>
+    <div id="output" tabindex="0"></div>
+  </div>
+  
+  <script src="../node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+  <script src="../node_modules/@xterm/addon-web-links/lib/addon-web-links.js"></script>
+  <script src="../node_modules/@xterm/addon-unicode11/lib/addon-unicode11.js"></script>
+  <script src="../node_modules/@xterm/addon-canvas/lib/addon-canvas.js"></script>
+  <script src="terminal.js"></script>
+</body>
+</html>
