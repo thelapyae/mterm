@@ -1,9 +1,0 @@
-version: 1.0.5
-files:
-  - url: mterm-1.0.5.AppImage
-    sha512: oDi8v1Xl02ejY7uL1SezEqrZ+0Crx6EuS4lL+zGpc+d9Zf9POWu/EKOV3lnB87tLnzzX1MfQ34B1DMS0LQB6pg==
-    size: 113267097
-    blockMapSize: 119213
-path: mterm-1.0.5.AppImage
-sha512: oDi8v1Xl02ejY7uL1SezEqrZ+0Crx6EuS4lL+zGpc+d9Zf9POWu/EKOV3lnB87tLnzzX1MfQ34B1DMS0LQB6pg==
-releaseDate: '2026-04-26T01:11:32.390Z'
