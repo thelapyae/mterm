@@ -1,0 +1,9 @@
+version: 1.0.6
+files:
+  - url: mterm-linux.AppImage
+    sha512: pYRErNE+RkVyD1XlUQBLJNNY4NjS6Pa05/u4VXtxeY56z0RLNowYmwbvMgd9hhPY1qIOA2qNJrfbDNh4qg+OHQ==
+    size: 111865305
+    blockMapSize: 118253
+path: mterm-linux.AppImage
+sha512: pYRErNE+RkVyD1XlUQBLJNNY4NjS6Pa05/u4VXtxeY56z0RLNowYmwbvMgd9hhPY1qIOA2qNJrfbDNh4qg+OHQ==
+releaseDate: '2026-04-26T15:36:42.330Z'

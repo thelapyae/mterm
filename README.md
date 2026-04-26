@@ -9,7 +9,7 @@
 ---
 
 ### Download
-Latest Version: **v1.0.5**
+Latest Version: **v1.0.6**
 
 - **macOS (Apple Silicon)**: [mterm-mac-arm64.dmg](https://github.com/thelapyae/mterm/releases/latest/download/mterm-mac-arm64.dmg)
 - **Windows**: [mterm-Setup.exe](https://github.com/thelapyae/mterm/releases/latest/download/mterm-Setup.exe)

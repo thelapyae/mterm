@@ -1,0 +1,11 @@
+version: 1.0.6
+files:
+  - url: mterm-mac-arm64.zip
+    sha512: jY7o+VWHzBvNLrI4VoJo94T4eH2VviovVhyFux54027YnYeo31ZSE/JjIREuuwaGsRB0xVNmu1L1Cc2xSR3lpQ==
+    size: 97769192
+  - url: mterm-mac-arm64.dmg
+    sha512: 21cnpw0/jzITwocuTIUAHGX17rTUisjBSNLMMWFEfit7pQJhlumZZvCMat6deSr4wQaFTlQEKXiz4E/wMJh/4A==
+    size: 101677014
+path: mterm-mac-arm64.zip
+sha512: jY7o+VWHzBvNLrI4VoJo94T4eH2VviovVhyFux54027YnYeo31ZSE/JjIREuuwaGsRB0xVNmu1L1Cc2xSR3lpQ==
+releaseDate: '2026-04-26T15:36:42.330Z'

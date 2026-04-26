@@ -1,0 +1,8 @@
+version: 1.0.6
+files:
+  - url: mterm-Setup.exe
+    sha512: AlhM2vot7tddvS9M+l8dfPUeWydljbXXZkoyK+kNoOSDfdG8WdTKL7LJCTB5l26fHwxmKjLKo8mztu+YUUykqA==
+    size: 92648890
+path: mterm-Setup.exe
+sha512: AlhM2vot7tddvS9M+l8dfPUeWydljbXXZkoyK+kNoOSDfdG8WdTKL7LJCTB5l26fHwxmKjLKo8mztu+YUUykqA==
+releaseDate: '2026-04-26T15:36:42.330Z'
