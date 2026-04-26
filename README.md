@@ -55,9 +55,22 @@ With **mterm**, Burmese stays readable, clean, and correctly shaped.
 ### Download
 Latest Version: **v1.0.6**
 
-- **macOS (Apple Silicon)**: [mterm-mac-arm64.dmg](https://github.com/thelapyae/mterm/releases/latest/download/mterm-mac-arm64.dmg)
-- **Windows**: [mterm-Setup.exe](https://github.com/thelapyae/mterm/releases/latest/download/mterm-Setup.exe)
-- **Linux**: [mterm-linux.AppImage](https://github.com/thelapyae/mterm/releases/latest/download/mterm-linux.AppImage)
+- **macOS (Apple Silicon / M-series Macs)**: [mterm-mac-arm64.dmg](https://github.com/thelapyae/mterm/releases/latest/download/mterm-mac-arm64.dmg)
+- **Windows (most Intel/AMD PCs)**: [mterm-Setup.exe](https://github.com/thelapyae/mterm/releases/latest/download/mterm-Setup.exe)
+- **Linux x64 (most Intel/AMD PCs)**: [mterm-linux.AppImage](https://github.com/thelapyae/mterm/releases/latest/download/mterm-linux.AppImage)
+- **Linux ARM64 (Apple Silicon VMs, ARM laptops, Raspberry Pi class devices)**: [mterm-linux-arm64.tar.gz](https://github.com/thelapyae/mterm/releases/latest/download/mterm-linux-arm64.tar.gz)
+
+### Which one should I install?
+
+- 🍎 **Use macOS ARM64** if you are on a modern MacBook, Mac mini, or Mac Studio with an M1, M2, M3, M4, or M5 chip.
+- 🪟 **Use Windows** if you are on a normal Windows laptop or desktop with Intel or AMD.
+- 🐧 **Use Linux x64 AppImage** if your Linux machine reports `x86_64` from `uname -m`.
+- ⚙️ **Use Linux ARM64** if your Linux machine reports `aarch64` or `arm64` from `uname -m`.
+
+### Linux note
+
+- 📦 **Linux x64** ships as an AppImage and is the easiest option for normal desktop Linux PCs.
+- 🧩 **Linux ARM64** currently ships as a `.tar.gz` archive instead of AppImage. Extract it and run `mterm` from the unpacked folder.
 
 ---
 ## 🚀 Learn more
