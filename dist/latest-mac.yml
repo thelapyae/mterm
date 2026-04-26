@@ -1,8 +1,8 @@
-version: 1.0.4
+version: 1.0.5
 files:
-  - url: mterm-1.0.4-arm64.dmg
-    sha512: q2jWpLq7Hj+Mxqc6lepZI8LRHxUB9g0kR2A+lzuZTnN0dQNtdlW09g4AJzJWluQXbsp/7BoQ1v449CuZZz/ukg==
-    size: 103579129
-path: mterm-1.0.4-arm64.dmg
-sha512: q2jWpLq7Hj+Mxqc6lepZI8LRHxUB9g0kR2A+lzuZTnN0dQNtdlW09g4AJzJWluQXbsp/7BoQ1v449CuZZz/ukg==
-releaseDate: '2026-04-25T10:37:41.274Z'
+  - url: mterm-1.0.5-arm64.dmg
+    sha512: StT+SB/AhmVjicw5iORctWa9jT2AsMy9xrrbA9OsqorHgOEUpZgcIL3pHF1oU/jxIaX8C6VMMmCwXHk8vrE4tw==
+    size: 103582528
+path: mterm-1.0.5-arm64.dmg
+sha512: StT+SB/AhmVjicw5iORctWa9jT2AsMy9xrrbA9OsqorHgOEUpZgcIL3pHF1oU/jxIaX8C6VMMmCwXHk8vrE4tw==
+releaseDate: '2026-04-26T01:11:32.390Z'
