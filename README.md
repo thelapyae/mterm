@@ -55,6 +55,7 @@ With **mterm**, Burmese stays readable, clean, and correctly shaped.
 ### Download
 Latest Version: **v1.0.6**
 
+- **Homebrew (macOS Apple Silicon)**: `brew install --cask thelapyae/mterm/mterm`
 - **macOS (Apple Silicon / M-series Macs)**: [mterm-mac-arm64.dmg](https://github.com/thelapyae/mterm/releases/latest/download/mterm-mac-arm64.dmg)
 - **Windows (most Intel/AMD PCs)**: [mterm-Setup.exe](https://github.com/thelapyae/mterm/releases/latest/download/mterm-Setup.exe)
 - **Linux x64 (most Intel/AMD PCs)**: [mterm-linux.AppImage](https://github.com/thelapyae/mterm/releases/latest/download/mterm-linux.AppImage)
@@ -63,6 +64,7 @@ Latest Version: **v1.0.6**
 ### Which one should I install?
 
 - 🍎 **Use macOS ARM64** if you are on a modern MacBook, Mac mini, or Mac Studio with an M1, M2, M3, M4, or M5 chip.
+- 🍺 **Use Homebrew** on Apple Silicon macOS if you prefer `brew install` over downloading a DMG manually.
 - 🪟 **Use Windows** if you are on a normal Windows laptop or desktop with Intel or AMD.
 - 🐧 **Use Linux x64 AppImage** if your Linux machine reports `x86_64` from `uname -m`.
 - ⚙️ **Use Linux ARM64** if your Linux machine reports `aarch64` or `arm64` from `uname -m`.
